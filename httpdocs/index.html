@@ -1,0 +1,121 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Temperature Control</title>
+  <meta name="author" content="Erwin Kooi, CDyWeb Kingston, www.cdyweb.com" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+  <link href="css/bootstrap-responsive.min.css" rel="stylesheet" type="text/css" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+  <link href="css/jquery.jqplot.min.css" rel="stylesheet" type="text/css" />
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" charset="utf-8"></script>
+  <script type="text/javascript" src="js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap-modal.js"></script>
+  <script type="text/javascript" src="js/excanvas.min.js"></script>
+  <script type="text/javascript" src="js/jquery.jqplot.min.js"></script>
+  <script type="text/javascript" src="js/jqplot.dateAxisRenderer.min.js"></script>
+</head>
+
+<body>
+
+  <div id="wrapper">
+    <h1>Temperature Control</h1>
+    <p>&nbsp;</p>
+    <table class="table" style="width:100%">
+      <tr class="">
+        <td><h2>Current Value</h2></td>
+        <td>
+          <h1>
+            <span id="pv"></span>
+            <span class="output-icons" style="float:right" id="is_heating"><i class="icon-fire"></i></span>
+            <span class="output-icons" style="float:right" id="is_cooling"><img src="img/snowflake.png"></span>
+          </h1>
+        </td>
+      </tr>
+      <tr>
+        <td><h2>Set point</h2></td>
+        <td><h2 style="color:#88D"><span id="setpoint"></span> <button style="float:right" class="btn" onclick="$('#inputSetPoint').val(window.sp);$('#myModal').modal();"><i class="icon-pencil"></i> Edit</button></h2></td>
+      </tr>
+      <tr>
+        <td colspan="2">
+          <div id="plot"></div>
+        </td>
+    </table>
+  </div>
+
+  <div class="modal hide" id="myModal">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal">×</button>
+      <h3></h3>
+    </div>
+    <div class="modal-body">
+      <form class="form-horizontal" id="myForm" action="#">
+        <div class="control-group">
+          <label class="control-label" for="inputEmail">Set point</label>
+          <div class="controls">
+            <input type="number" name="setpoint" id="inputSetPoint" placeholder="00.0" value="0">
+            &#176;C
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="controls">
+            <button type="button" onclick="set_setpoint()" class="btn">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <a href="#" class="btn" data-dismiss="modal">Close</a>
+    </div>
+  </div>
+  
+  <script type="text/javascript">
+    var sp=0;
+    function loadPv() {
+      $.get('',{'ajax':'pv'},function(resp) {
+        $('#pv').html(resp.pv+' &#176;C');
+        $('#setpoint').html(resp.sp+' &#176;C');
+        window.sp=resp.sp;
+        if (resp.age>120) $('#pv').css('color','red'); else $('#pv').css('color','#8D8');
+        $('.output-icons').hide();
+        if (resp.output) $.each(resp.output,function(i,e) {
+          $('#is_'+i).show();
+        });
+        if (resp.hist.length==0 || resp.hist[0].length==0) return;
+        if (window.plot) {
+          window.plot.series[0].data=resp.hist[0];
+          window.plot.replot({resetAxes:true});
+        } else {
+          $('#plot').html('');
+          window.plot=$.jqplot('plot', resp.hist, {axes:{xaxis:{
+            //min:resp.hist_min,
+            //max:resp.hist_max,
+            renderer:$.jqplot.DateAxisRenderer,
+            tickOptions:{formatString:"%a %H:%M"}
+          }} });
+        }
+      }, 'json');
+    }
+    function set_setpoint() {
+      var v=parseFloat($('#inputSetPoint').val());
+      if ((v<=0) || (v>=30)) {
+        alert('Please enter a number between 0 and 30');
+        return;
+      }
+      $.post('?ajax=setpoint',$('#myForm').serialize(),function(resp) {
+        $('#setpoint').html(resp.setpoint);
+        $('#myModal').modal('hide');
+      },'json');
+    }
+    $(document).ready(function() {
+      loadPv();
+      window.setInterval(loadPv,5000);
+    });
+  </script>
+
+</body>
+</html>

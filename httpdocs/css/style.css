@@ -1,0 +1,7 @@
+#wrapper {
+  width:620px;
+  margin: 1em auto 0;
+  padding:1em 10px;
+  border-left:1px solid #ccc;
+  border-right:1px solid #ccc;
+}
