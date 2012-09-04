@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public class BV4502 implements Relay, I2CInterface  {
   
-  private short address = 0x62;
+  private short address = 0x62; //Device default address is 0x62
   
   private static short SWITCH_A = 0x01; // Relay A on/off
   private static short SWITCH_B = 0x02; // Relay B on/off
@@ -17,6 +17,8 @@ public class BV4502 implements Relay, I2CInterface  {
   private static short TIMED_B_ON = 0x06; // Relay B timed on
   private static short TIMED_B_OFF = 0x07; // Relay B timed off
   private static short TIMED_B_DISPLAY = 0x08; // Relay B counter display
+  
+  private static short READ_VERSION = 0xA0; //This simply returns two bytes that represents the firmware version.
   
   private static I2CInterface device = null;
   private static BV4502 channel_A = null;
@@ -105,6 +107,13 @@ public class BV4502 implements Relay, I2CInterface  {
 
   public void timed_b_display() throws IOException {
     throw new IOException("Not implemented");
+  }
+  
+  public byte[] read_version() throws IOException {
+    byte[] data=new byte[1];
+    data[0] = (byte)READ_VERSION;
+    i2c_write(address, data);
+    return i2c_read(address, 2);
   }
 
 }

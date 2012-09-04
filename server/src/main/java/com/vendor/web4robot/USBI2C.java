@@ -25,15 +25,16 @@ public class USBI2C extends RS232Device implements I2CInterface {
     private static short SET_PWM_V = 0x94; // Set PWM value
     private static short SET_PWM_F = 0x95; // Set PWM frequency
     
-    private static short SET_PWM_F_3KHZ = 1;
-    private static short SET_PWM_F_12KHZ = 2;
-    private static short SET_PWM_F_48KHZ = 3;
+    public static short SET_PWM_F_3KHZ = 1;
+    public static short SET_PWM_F_12KHZ = 2;
+    public static short SET_PWM_F_48KHZ = 3;
     
-    private static short SET_MODE_I2C_100 = 1; // I2C 100KBits mode
-    private static short SET_MODE_I2C_400 = 2; // I2C 400KBits mode
-    private static short SET_MODE_I2C_SERIAL = 3; // Serial mode 9600 baud rate
+    public static short SET_MODE_I2C_100 = 1; // I2C 100KBits mode
+    public static short SET_MODE_I2C_400 = 2; // I2C 400KBits mode
+    public static short SET_MODE_I2C_SERIAL = 3; // Serial mode 9600 baud rate
     
-    private short mode=0;
+    //After power up the module default in I2C 100 KBits mode.
+    private short mode = SET_MODE_I2C_100;
     
     private static USBI2C instance=null;
     
@@ -51,6 +52,18 @@ public class USBI2C extends RS232Device implements I2CInterface {
         dest[pos+0]=(byte)(value >>> 8);
         dest[pos+1]=(byte)value;
         return dest;
+    }
+    
+    @Override
+    public byte[] sendAndReceive(byte[] data, long timeout, int byteCount) throws IOException {
+      byte[] result = super.sendAndReceive(data, timeout, byteCount);
+      /**
+        To prevent the computer from handing the module due to an unfinished command sequence, the
+        USB/I2C module has a time-out feature. The delay between any two bytes of data coming from
+        the computer should be less than 255 ms
+       */
+      try { Thread.currentThread().sleep(300); } catch (InterruptedException ex) {}
+      return result;
     }
 
     //Module mode setup
